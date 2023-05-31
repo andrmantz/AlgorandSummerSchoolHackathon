@@ -641,11 +641,13 @@ class AllTests(MonsterArenaTestCommon):
 if __name__ == "__main__":
     try:
         AppID = DeployAndFundApp()
+            
         for acc in sandbox.get_accounts():
             playerOptIn(AppID, acc)
+            
     except:
         assert False, "Failed to deploy and fund contract. Possibly has syntax bugs"
     print("APP DEPLOYED AND FUNDED CORRECTLY WITH ID ", AppID)
     
-    AllTests.AppID = AppID
-    unittest.main()
+    # AllTests.AppID = AppID
+    # unittest.main()

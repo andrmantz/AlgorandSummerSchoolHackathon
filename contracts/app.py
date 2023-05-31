@@ -14,7 +14,7 @@ class playerData(abi.NamedTuple):
 class monsterData(abi.NamedTuple):
     POS_X: abi.Field[abi.Uint64]
     POS_Y: abi.Field[abi.Uint64]
-    UNSECURED_ASSET: abi.Field[abi.Uint64]
+    ADA_ID: abi.Field[abi.Uint64]
     
 class State:
     ADMIN: Final[GlobalStateValue] = GlobalStateValue(
@@ -125,6 +125,10 @@ def enterPlayer() -> Expr:
             app.state.POS_Y.set(pos_y.get()),
             app.state.UNSECURED_ASSET.set(unsecured_asset.get()),
             app.state.SCORE.set(score.get()),
+            App.box_replace(Txn.sender(), Int(0), Itob(Int(0))),
+            App.box_replace(Txn.sender(), Int(8), Itob(Int(0))),
+            App.box_replace(Txn.sender(), Int(16), Itob(Int(0))),
+            App.box_replace(Txn.sender(), Int(24), Itob(Int(0))),
            ),
         )
     )
@@ -166,7 +170,6 @@ def playerKillMonster() -> Expr:
         (monster_counter := abi.Uint64()).set(Btoi(App.box_extract(Bytes("MONSTERS"), Int(0), Int(8)))),
         Assert(monster_counter.get() > Int(0)),
 
-        
         (monster_index := abi.Uint64()).set(Int(0)),
 
         # Look for the asaId in the MONSTERS box
@@ -210,7 +213,6 @@ def pvpSteal() -> Expr:
         (steal_asset := abi.Uint64()).set(app.state.UNSECURED_ASSET[steal_acc.get()]),
         Assert(steal_asset.get() != Int(0)),
         
-        # @TODO Does the user being stolen need to be active?
         Assert(app.state.SCORE[steal_acc.get()] != Int(0)),
         
         Assert(dist(app.state.POS_X, app.state.POS_X[steal_acc.get()], app.state.POS_Y, app.state.POS_Y[steal_acc.get()]) <= Int(100)),
@@ -219,12 +221,12 @@ def pvpSteal() -> Expr:
         
         app.state.UNSECURED_ASSET.set(steal_asset.get()),
         app.state.UNSECURED_ASSET[steal_acc.get()].set(Int(0)),
-        
     )
 
 @app.external
 def secureAsset() -> Expr:
     return Seq(
+        # Assert(Int(0) == Int(1)),
         # The player has to be active, must hold an asset and 
         # must be inside the safe area in order to call this function
         Assert(app.state.SCORE != Int(0)),
@@ -235,5 +237,4 @@ def secureAsset() -> Expr:
         app.state.UNSECURED_ASSET.set(Int(0)),
         # Player gets 1 point
         app.state.SCORE.set(app.state.SCORE.get() + Int(1)),
-        # @TODO Maybe unfreeze the ASA as the user secured it?
     )

@@ -385,6 +385,26 @@ txn Sender
 bytec_0 // "SCORE"
 frame_dig 10
 app_local_put
+txn Sender
+intc_0 // 0
+intc_0 // 0
+itob
+box_replace
+txn Sender
+intc_3 // 8
+intc_0 // 0
+itob
+box_replace
+txn Sender
+pushint 16 // 16
+intc_0 // 0
+itob
+box_replace
+txn Sender
+intc_2 // 24
+intc_0 // 0
+itob
+box_replace
 b enterPlayer_6_l3
 enterPlayer_6_l2:
 intc_0 // 0
@@ -748,7 +768,7 @@ app_local_get
 intc_0 // 0
 ==
 assert
-txna Accounts 1
+txna Accounts 0
 frame_bury 0
 frame_dig 0
 len
@@ -760,6 +780,12 @@ bytec_2 // "UNSECURED_ASSET"
 app_local_get
 frame_bury 1
 frame_dig 1
+intc_0 // 0
+!=
+assert
+frame_dig 0
+bytec_0 // "SCORE"
+app_local_get
 intc_0 // 0
 !=
 assert

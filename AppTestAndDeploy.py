@@ -209,7 +209,7 @@ def playerKillMonster(AppID, playerAccount:sandbox.SandboxAccount, monsterASAID)
     sp = client.suggested_params()
     sp.fee = constants.MIN_TXN_FEE * 2
     sp.flat_fee = True
-
+    
     txn1 = AssetOptInTxn(playerAccount.address, sp=client.suggested_params(), index=monsterASAID)
     txn2 = ApplicationCallTxn(
         sender=playerAccount.address,
@@ -240,9 +240,7 @@ def secureAsset(AppID, playerAccount:sandbox.SandboxAccount):
         if (v["key"] == 'VU5TRUNVUkVEX0FTU0VU'):
             ASA = v["value"]["uint"]
     
-    monsterASAID = ASA
-    if (monsterASAID == 0):
-        return
+
     
     sp = client.suggested_params()
     sp.fee = constants.MIN_TXN_FEE * 2
@@ -254,7 +252,7 @@ def secureAsset(AppID, playerAccount:sandbox.SandboxAccount):
         sp=sp,
         on_complete=OnComplete.NoOpOC.real,
         app_args=["secureAsset"],
-        foreign_assets=[monsterASAID],
+        foreign_assets=[ASA],
         boxes=[(0,0), (0,0), (0,0), (0, algosdk.encoding.decode_address(playerAccount.address))],
     )
 
@@ -275,7 +273,6 @@ def playerSteal(AppID, thiefAccount:sandbox.SandboxAccount, victimAddress:str):
     sp = client.suggested_params()
     sp.fee = constants.MIN_TXN_FEE * 2
     sp.flat_fee = True
-
     txn1 = AssetOptInTxn(thiefAccount.address, sp=client.suggested_params(), index=ASAToSteal)
     txn2 = ApplicationCallTxn(
         sender=thiefAccount.address,
@@ -298,8 +295,6 @@ def playerSteal(AppID, thiefAccount:sandbox.SandboxAccount, victimAddress:str):
     for t in signedTxnList:
         wait_for_confirmation(client, t.get_txid())
     return wait_for_confirmation(client, txn2.get_txid())
-
-
 
 
 class MonsterArenaTestCommon(unittest.TestCase):
@@ -331,8 +326,8 @@ class MonsterArenaTestCommon(unittest.TestCase):
         playerVal = {"ADDRESS": boxName,
                     "POS_X": int.from_bytes(boxContent[:8], "big"), 
                      "POS_Y": int.from_bytes(boxContent[8:16], "big"), 
-                     "SCORE": int.from_bytes(boxContent[16:24], "big"), 
-                     "UNSECURED_ASSET": int.from_bytes(boxContent[24:32], "big")}
+                     "UNSECURED_ASSET": int.from_bytes(boxContent[16:24], "big"),
+                     "SCORE": int.from_bytes(boxContent[24:32], "big")}
         return playerVal
 
 
@@ -363,9 +358,9 @@ class MonsterArenaTestCommon(unittest.TestCase):
         p = sandbox.get_algod_client().account_application_info(account.address, self.AppID)["app-local-state"]['key-value']
         for v in p:
             if (v["key"] == 'UE9TX1k='):
-                POS_X = v["value"]["uint"]
-            elif (v["key"] == 'UE9TX1g='):
                 POS_Y = v["value"]["uint"]
+            elif (v["key"] == 'UE9TX1g='):
+                POS_X = v["value"]["uint"]
             elif (v["key"] == 'VU5TRUNVUkVEX0FTU0VU'):
                 ASA = v["value"]["uint"]
             elif (v["key"] == "U0NPUkU="):
@@ -469,8 +464,8 @@ class AllTests(MonsterArenaTestCommon):
     @classmethod
     def test_playerExitAndSave(self):
         acc = sandbox.get_accounts()[0]
+        enterPlayer(self.AppID, acc)
         cachedLocalVal = self.getPlayerLocalState(acc)
-        
         try:
             out = exitAndSavePlayer(self.AppID, acc)
         except:
@@ -555,7 +550,7 @@ class AllTests(MonsterArenaTestCommon):
         correctLocalState["POS_Y"] = correctLocalState["POS_Y"]+3
         correctLocalState["POS_X"] = correctLocalState["POS_X"]+(2-1)
         newLocalState = self.getPlayerLocalState(acc)
-        
+
         assert newLocalState == correctLocalState, "Wrong position after moves"
         
         
@@ -567,17 +562,19 @@ class AllTests(MonsterArenaTestCommon):
             out = secureAsset(self.AppID, acc)
         except:
             assert False, "Asset not secured correctly"
-
+        
         correctLocalState = prevLocalState.copy()
         correctLocalState["SCORE"] = correctLocalState["SCORE"]+1
         correctLocalState["UNSECURED_ASSET"] = 0
         newLocalState = self.getPlayerLocalState(acc)
+
         
         assert newLocalState == correctLocalState, "Wrong local state after securing asset"
         
         
     @classmethod
     def test_StealFromPlayer(self):
+        
         acc = sandbox.get_accounts()[2]
         victim = sandbox.get_accounts()[0]
         
@@ -628,12 +625,13 @@ class AllTests(MonsterArenaTestCommon):
     def test_StealFromOfflinePlayer(self):
         acc = sandbox.get_accounts()[1]
         victim = sandbox.get_accounts()[0]
+        exitAndSavePlayer(self.AppID, victim)
         
         try:
-            exitAndSavePlayer(self.AppID, victim)
             playerSteal(self.AppID, acc, victim.address)
-        except:
             assert False, "Can't steal from an offline player"
+        except:
+            assert True
 
 
 
@@ -649,5 +647,5 @@ if __name__ == "__main__":
         assert False, "Failed to deploy and fund contract. Possibly has syntax bugs"
     print("APP DEPLOYED AND FUNDED CORRECTLY WITH ID ", AppID)
     
-    # AllTests.AppID = AppID
-    # unittest.main()
+    AllTests.AppID = AppID
+    unittest.main()

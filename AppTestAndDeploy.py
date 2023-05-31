@@ -209,7 +209,7 @@ def playerKillMonster(AppID, playerAccount:sandbox.SandboxAccount, monsterASAID)
     sp = client.suggested_params()
     sp.fee = constants.MIN_TXN_FEE * 2
     sp.flat_fee = True
-    
+
     txn1 = AssetOptInTxn(playerAccount.address, sp=client.suggested_params(), index=monsterASAID)
     txn2 = ApplicationCallTxn(
         sender=playerAccount.address,
@@ -240,7 +240,9 @@ def secureAsset(AppID, playerAccount:sandbox.SandboxAccount):
         if (v["key"] == 'VU5TRUNVUkVEX0FTU0VU'):
             ASA = v["value"]["uint"]
     
-
+    monsterASAID = ASA
+    if (monsterASAID == 0):
+        return
     
     sp = client.suggested_params()
     sp.fee = constants.MIN_TXN_FEE * 2
@@ -252,7 +254,7 @@ def secureAsset(AppID, playerAccount:sandbox.SandboxAccount):
         sp=sp,
         on_complete=OnComplete.NoOpOC.real,
         app_args=["secureAsset"],
-        foreign_assets=[ASA],
+        foreign_assets=[monsterASAID],
         boxes=[(0,0), (0,0), (0,0), (0, algosdk.encoding.decode_address(playerAccount.address))],
     )
 
@@ -270,10 +272,10 @@ def playerSteal(AppID, thiefAccount:sandbox.SandboxAccount, victimAddress:str):
             ASA = v["value"]["uint"]
     ASAToSteal = ASA
 
-
     sp = client.suggested_params()
     sp.fee = constants.MIN_TXN_FEE * 2
     sp.flat_fee = True
+
     txn1 = AssetOptInTxn(thiefAccount.address, sp=client.suggested_params(), index=ASAToSteal)
     txn2 = ApplicationCallTxn(
         sender=thiefAccount.address,
@@ -296,6 +298,8 @@ def playerSteal(AppID, thiefAccount:sandbox.SandboxAccount, victimAddress:str):
     for t in signedTxnList:
         wait_for_confirmation(client, t.get_txid())
     return wait_for_confirmation(client, txn2.get_txid())
+
+
 
 
 class MonsterArenaTestCommon(unittest.TestCase):
@@ -415,8 +419,6 @@ class AllTests(MonsterArenaTestCommon):
     
     @classmethod
     def test_MonsterASAs(self):
-        print(self.getPlayerLocalState(sandbox.get_accounts()[0]))
-        
         AppAddress = get_application_address(self.AppID)
         for m in self.ActiveMonsters:
             try:
@@ -430,8 +432,6 @@ class AllTests(MonsterArenaTestCommon):
 
     @classmethod
     def test_playerKillMonster(self):
-        print(self.getPlayerLocalState(sandbox.get_accounts()[0]))
-        
         monsterIdx = 0
         for acc in sandbox.get_accounts():
             try:
@@ -468,10 +468,9 @@ class AllTests(MonsterArenaTestCommon):
 
     @classmethod
     def test_playerExitAndSave(self):
-        print(self.getPlayerLocalState(sandbox.get_accounts()[0]))
-        
         acc = sandbox.get_accounts()[0]
         cachedLocalVal = self.getPlayerLocalState(acc)
+        
         try:
             out = exitAndSavePlayer(self.AppID, acc)
         except:
@@ -493,8 +492,6 @@ class AllTests(MonsterArenaTestCommon):
 
     @classmethod
     def test_playerRestoreSave(self):
-        print(self.getPlayerLocalState(sandbox.get_accounts()[0]))
-        
         acc = sandbox.get_accounts()[0]
         cachedBox = self.getPlayerBox(acc)
         cachedLS = self.getPlayerLocalState(acc)
@@ -520,8 +517,6 @@ class AllTests(MonsterArenaTestCommon):
     
     @classmethod
     def test_SecureAssetWithoutLocalSpace(self):
-        print(self.getPlayerLocalState(sandbox.get_accounts()[0]))
-        
         acc = sandbox.get_accounts()[0]
         try:
             out = secureAsset(self.AppID, acc)
@@ -532,8 +527,6 @@ class AllTests(MonsterArenaTestCommon):
     
     @classmethod
     def test_SecureAssetOutsideSafeZone(self):
-        print(self.getPlayerLocalState(sandbox.get_accounts()[0]))
-        
         acc = sandbox.get_accounts()[1]
         try:
             for _ in range(0,12):
@@ -546,8 +539,6 @@ class AllTests(MonsterArenaTestCommon):
             
     @classmethod
     def test_PlayerMove(self):
-        print(self.getPlayerLocalState(sandbox.get_accounts()[0]))
-        
         acc = sandbox.get_accounts()[1]
         prevLocalState = self.getPlayerLocalState(acc)
         try:
@@ -564,40 +555,35 @@ class AllTests(MonsterArenaTestCommon):
         correctLocalState["POS_Y"] = correctLocalState["POS_Y"]+3
         correctLocalState["POS_X"] = correctLocalState["POS_X"]+(2-1)
         newLocalState = self.getPlayerLocalState(acc)
-
+        
         assert newLocalState == correctLocalState, "Wrong position after moves"
         
         
     @classmethod
     def test_SecureAsset(self):
-        print(self.getPlayerLocalState(sandbox.get_accounts()[0]))
-        
         acc = sandbox.get_accounts()[2]
         prevLocalState = self.getPlayerLocalState(acc)
         try:
             out = secureAsset(self.AppID, acc)
         except:
             assert False, "Asset not secured correctly"
-        
+
         correctLocalState = prevLocalState.copy()
         correctLocalState["SCORE"] = correctLocalState["SCORE"]+1
         correctLocalState["UNSECURED_ASSET"] = 0
         newLocalState = self.getPlayerLocalState(acc)
-
         
         assert newLocalState == correctLocalState, "Wrong local state after securing asset"
         
         
     @classmethod
     def test_StealFromPlayer(self):
-        
         acc = sandbox.get_accounts()[2]
         victim = sandbox.get_accounts()[0]
         
         cachedVictimLS = self.getPlayerLocalState(victim)
         cachedAccLS = self.getPlayerLocalState(acc)
-        print(cachedAccLS)
-        print(cachedVictimLS)
+
         try:
             out=playerSteal(self.AppID, acc, victim.address)
         except:
@@ -620,7 +606,7 @@ class AllTests(MonsterArenaTestCommon):
             if b["address"] == acc.address:
                 assert b["amount"] == 1, "account should hold the asset now"
             elif b["address"] == victim.address:
-                assert b["amount"] == 1, "victim should not hold the asset now"
+                assert b["amount"] == 0, "victim should not hold the asset now"
                 
                 
     @classmethod
@@ -656,10 +642,8 @@ class AllTests(MonsterArenaTestCommon):
 if __name__ == "__main__":
     try:
         AppID = DeployAndFundApp()
-            
         for acc in sandbox.get_accounts():
             playerOptIn(AppID, acc)
-            
     except:
         assert False, "Failed to deploy and fund contract. Possibly has syntax bugs"
     print("APP DEPLOYED AND FUNDED CORRECTLY WITH ID ", AppID)
@@ -669,13 +653,13 @@ if __name__ == "__main__":
     AllTests.test_AddMonsters()
     AllTests.test_AddPlayers()
     AllTests.test_MonsterASAs()
+    AllTests.test_SecureAssetWithoutLocalSpace()
     AllTests.test_playerKillMonster()
-    # AllTests.test_playerExitAndSave()
-    # AllTests.test_playerRestoreSave()
-    # AllTests.test_SecureAssetWithoutLocalSpace()
-    # AllTests.test_SecureAssetOutsideSafeZone()
+    AllTests.test_playerExitAndSave()
+    AllTests.test_playerRestoreSave()
+    AllTests.test_SecureAssetOutsideSafeZone()
     AllTests.test_PlayerMove()
     AllTests.test_SecureAsset()
     AllTests.test_StealFromPlayer()
-    # AllTests.test_StealFromFarAwayPlayer()
-    # AllTests.test_StealFromOfflinePlayer()
+    AllTests.test_StealFromFarAwayPlayer()
+    AllTests.test_StealFromOfflinePlayer()

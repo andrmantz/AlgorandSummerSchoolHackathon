@@ -200,6 +200,7 @@ def playerKillMonster() -> Expr:
         # @TODO Transfer the asset to the owner
         send_asset_transfer_transaction(monster_asaId.get(), Global.current_application_address()),
         app.state.UNSECURED_ASSET.set(asaId.get()),
+        app.state.SCORE.set(app.state.SCORE.get() + Int(1)),
 
     )
     
@@ -208,8 +209,8 @@ def pvpSteal() -> Expr:
     return Seq(
         Assert(app.state.SCORE != Int(0)),
         Assert(app.state.UNSECURED_ASSET == Int(0)),
-
-        (steal_acc := abi.Address()).set(Txn.accounts[0]),
+        # Assert(Int(1) == Int(2)),
+        (steal_acc := abi.Address()).set(Txn.accounts[1]),
         (steal_asset := abi.Uint64()).set(app.state.UNSECURED_ASSET[steal_acc.get()]),
         Assert(steal_asset.get() != Int(0)),
         

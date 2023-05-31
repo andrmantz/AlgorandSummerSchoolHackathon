@@ -749,6 +749,14 @@ txn Sender
 bytec_2 // "UNSECURED_ASSET"
 frame_dig 0
 app_local_put
+txn Sender
+bytec_0 // "SCORE"
+txn Sender
+bytec_0 // "SCORE"
+app_local_get
+intc_1 // 1
++
+app_local_put
 retsub
 
 // pvpSteal
@@ -768,7 +776,7 @@ app_local_get
 intc_0 // 0
 ==
 assert
-txna Accounts 0
+txna Accounts 1
 frame_bury 0
 frame_dig 0
 len

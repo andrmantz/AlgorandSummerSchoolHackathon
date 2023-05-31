@@ -15,3 +15,5 @@ sed -i '' 's/0x00025550/"UP"/g' contracts/ApprovalProgram.teal
 sed -i '' 's/0x0004444f574e/"DOWN"/g' contracts/ApprovalProgram.teal
 sed -i '' 's/0x00055249474854/"RIGHT"/g' contracts/ApprovalProgram.teal
 sed -i '' 's/0x00044c454654/"LEFT"/g' contracts/ApprovalProgram.teal
+
+rm -rf contracts/artifacts

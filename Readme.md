@@ -1,5 +1,15 @@
 # Monster Arena: A Multiplayer Game Leveraging some of Algorand's capabilities
 
+## Setup
+
+#### Installing dependencies and building
+
+Run `sh compile.sh` in order to install the dependencies via `pip` and compile the smart contracts into `teal`. It will additionally edit the routing rules in order to be compliant with the test file.
+
+#### Testing
+
+Run `python3 AppTestAndDeploy.py` in order to execute the tests. The tests are currently in a monolithic, sequential format, so if no error is printed out, they have been executed succesufully
+
 ## Problem Statement
 
 *Monster Arena* _(patent pending)_ is a multiplayer game that harnesses the power of the Algorand blockchain to foster player interactions within the MA world and its captivating creatures. Adventurers may embark on thrilling quests, vanquishing monsters scattered throughout the map using their infinite-range attacks, all while discovering and collecting exclusive NFTs dropped by their perished foes. 

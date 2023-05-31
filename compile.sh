@@ -1,5 +1,6 @@
 #!/bin/bash
 
+pip3 install -r requirements.txt
 python3 -m contracts.deploy
 cp contracts/artifacts/approval.teal contracts/ApprovalProgram.teal 
 cp contracts/artifacts/clear.teal contracts/ClearStateProgram.teal

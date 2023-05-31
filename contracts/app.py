@@ -211,7 +211,7 @@ def pvpSteal() -> Expr:
         Assert(steal_asset.get() != Int(0)),
         
         # @TODO Does the user being stolen need to be active?
-        # Assert(app.state.SCORE[steal_acc.get()] != Int(0)),
+        Assert(app.state.SCORE[steal_acc.get()] != Int(0)),
         
         Assert(dist(app.state.POS_X, app.state.POS_X[steal_acc.get()], app.state.POS_Y, app.state.POS_Y[steal_acc.get()]) <= Int(100)),
         
